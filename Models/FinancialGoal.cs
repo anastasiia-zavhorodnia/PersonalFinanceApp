@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace PersonalFinanceApp.Models
 {
@@ -6,7 +7,7 @@ namespace PersonalFinanceApp.Models
     {
         public int Id { get; set; }
 
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         public decimal TargetAmount { get; set; }
 
@@ -14,8 +15,9 @@ namespace PersonalFinanceApp.Models
 
         public DateTime TargetDate { get; set; }
 
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
-        public ICollection<GoalContribution> Contributions { get; set; }
+        public ICollection<GoalContribution> Contributions { get; set; } = new List<GoalContribution>();
     }
 }
+

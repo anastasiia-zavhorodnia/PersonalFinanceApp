@@ -1,4 +1,5 @@
-﻿namespace PersonalFinanceApp.Models
+﻿// Models/BudgetCategory.cs
+namespace PersonalFinanceApp.Models
 {
     public class BudgetCategory
     {
@@ -8,10 +9,10 @@
 
         public int BudgetId { get; set; }
 
-        public Budget Budget { get; set; }
+        public Budget? Budget { get; set; }
 
         public int CategoryId { get; set; }
 
-        public Category Category { get; set; }
+        public Category? Category { get; set; }
     }
 }

@@ -10,6 +10,6 @@
 
         public int FinancialGoalId { get; set; }
 
-        public FinancialGoal FinancialGoal { get; set; }
+        public FinancialGoal? FinancialGoal { get; set; }
     }
 }
