@@ -1,12 +1,17 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using PersonalFinanceApp.Models;
 
 namespace PersonalFinanceApp.ViewModels
 {
-    public class MainViewModel : ObservableObject
+    public partial class MainViewModel : ObservableObject
     {
         public ObservableCollection<Account> Accounts { get; set; }
+
+        public string NewAccountName { get; set; } = "";
+
+        public decimal NewAccountBalance { get; set; }
 
         public MainViewModel()
         {
@@ -33,6 +38,23 @@ namespace PersonalFinanceApp.ViewModels
                     Balance = 3000
                 }
             };
+        }
+
+        [RelayCommand]
+        public void AddAccount()
+        {
+            if (string.IsNullOrWhiteSpace(NewAccountName))
+                return;
+
+            Accounts.Add(new Account
+            {
+                Name = NewAccountName,
+                Type = "Банківський рахунок",
+                Balance = NewAccountBalance
+            });
+
+            NewAccountName = "";
+            NewAccountBalance = 0;
         }
     }
 }
