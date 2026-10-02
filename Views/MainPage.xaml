@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PersonalFinanceApp.ViewModels"
+             xmlns:models="clr-namespace:PersonalFinanceApp.Models"
+             x:Class="PersonalFinanceApp.Views.MainPage"
+             x:DataType="vm:MainViewModel"
+             Title="Мої рахунки">
+
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12">
+
+        <!-- Форма додавання нового рахунку -->
+        <VerticalStackLayout Grid.Row="0" Spacing="8">
+            <Entry Placeholder="Назва рахунку"
+                   Text="{Binding NewAccountName}" />
+            <Entry Placeholder="Початковий баланс"
+                   Keyboard="Numeric"
+                   Text="{Binding NewAccountBalance}" />
+            <Button Text="Додати рахунок"
+                    Command="{Binding AddAccountCommand}" />
+        </VerticalStackLayout>
+
+        <!-- Список рахунків -->
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Accounts}">
+            <CollectionView.EmptyView>
+                <Label Text="Рахунків поки немає"
+                       HorizontalOptions="Center" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Account">
+                    <Border Padding="12" Margin="0,4" StrokeShape="RoundRectangle 8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="{Binding Name}"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding Balance, StringFormat='{0:N2}'}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>
