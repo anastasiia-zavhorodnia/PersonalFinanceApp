@@ -1,60 +1,46 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using System.Globalization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
 using PersonalFinanceApp.Models;
 
 namespace PersonalFinanceApp.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        public ObservableCollection<Account> Accounts { get; set; }
+        public ObservableCollection<Account> Accounts { get; } = new();
 
-        public string NewAccountName { get; set; } = "";
+        [ObservableProperty]
+        private string newAccountName = string.Empty;
 
-        public decimal NewAccountBalance { get; set; }
-
-        public MainViewModel()
-        {
-            Accounts = new ObservableCollection<Account>
-            {
-                new Account
-                {
-                    Name = "Готівка",
-                    Type = "Готівка",
-                    Balance = 1000
-                },
-
-                new Account
-                {
-                    Name = "Monobank",
-                    Type = "Банківська картка",
-                    Balance = 5000
-                },
-
-                new Account
-                {
-                    Name = "ПриватБанк",
-                    Type = "Банківська картка",
-                    Balance = 3000
-                }
-            };
-        }
+        [ObservableProperty]
+        private string newAccountBalance = string.Empty;
 
         [RelayCommand]
-        public void AddAccount()
+        private void AddAccount()
         {
             if (string.IsNullOrWhiteSpace(NewAccountName))
                 return;
 
+            // Порожнє поле балансу вважаємо нулем; кома й крапка приймаються обидві
+            decimal balance = 0;
+            if (!string.IsNullOrWhiteSpace(NewAccountBalance))
+            {
+                var text = NewAccountBalance.Trim().Replace(',', '.');
+                if (!decimal.TryParse(text, NumberStyles.Number,
+                                      CultureInfo.InvariantCulture, out balance))
+                    return;
+            }
+
             Accounts.Add(new Account
             {
-                Name = NewAccountName,
+                Name = NewAccountName.Trim(),
                 Type = "Банківський рахунок",
-                Balance = NewAccountBalance
+                Balance = balance
             });
 
-            NewAccountName = "";
-            NewAccountBalance = 0;
+            NewAccountName = string.Empty;
+            NewAccountBalance = string.Empty;
         }
     }
 }
