@@ -1,12 +1,12 @@
-﻿using PersonalFinanceApp.ViewModels;
+using PersonalFinanceApp.ViewModels;
 
 namespace PersonalFinanceApp.Views;
 
-public partial class MainPage : ContentPage
+public partial class AccountDetailPage : ContentPage
 {
-    private readonly MainViewModel _viewModel; // Зберігаємо посилання на ViewModel
+    private readonly AccountDetailViewModel _viewModel; // Зберігаємо посилання на ViewModel
 
-    public MainPage(MainViewModel viewModel)
+    public AccountDetailPage(AccountDetailViewModel viewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
