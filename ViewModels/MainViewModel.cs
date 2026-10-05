@@ -3,12 +3,15 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceApp.Models;
+using PersonalFinanceApp.Services;
 
 namespace PersonalFinanceApp.ViewModels
 {
     public partial class MainViewModel : ObservableObject
     {
-        public ObservableCollection<Account> Accounts { get; } = new();
+        private readonly AccountService _accountService;
+
+        public ObservableCollection<Account> Accounts => _accountService.Accounts;
 
         [ObservableProperty]
         private string newAccountName = string.Empty;
@@ -16,13 +19,17 @@ namespace PersonalFinanceApp.ViewModels
         [ObservableProperty]
         private string newAccountBalance = string.Empty;
 
+        public MainViewModel(AccountService accountService)
+        {
+            _accountService = accountService;
+        }
+
         [RelayCommand]
         private void AddAccount()
         {
             if (string.IsNullOrWhiteSpace(NewAccountName))
                 return;
 
-            // Порожнє поле балансу вважаємо нулем; кома й крапка приймаються обидві
             decimal balance = 0;
             if (!string.IsNullOrWhiteSpace(NewAccountBalance))
             {
@@ -32,12 +39,7 @@ namespace PersonalFinanceApp.ViewModels
                     return;
             }
 
-            Accounts.Add(new Account
-            {
-                Name = NewAccountName.Trim(),
-                Type = "Банківський рахунок",
-                Balance = balance
-            });
+            _accountService.Add(NewAccountName.Trim(), "Банківський рахунок", balance);
 
             NewAccountName = string.Empty;
             NewAccountBalance = string.Empty;

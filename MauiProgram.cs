@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
-
 using PersonalFinanceApp.ViewModels;
 using PersonalFinanceApp.Views;
+using PersonalFinanceApp.Services; 
 
 namespace PersonalFinanceApp
 {
@@ -18,8 +18,16 @@ namespace PersonalFinanceApp
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            
+            builder.Services.AddSingleton<AccountService>();
+
+           
             builder.Services.AddTransient<MainViewModel>();
             builder.Services.AddTransient<MainPage>();
+
+            
+            builder.Services.AddTransient<AccountDetailViewModel>();
+            builder.Services.AddTransient<AccountDetailPage>();
 
 #if DEBUG
             builder.Logging.AddDebug();
@@ -29,3 +37,4 @@ namespace PersonalFinanceApp
         }
     }
 }
+
