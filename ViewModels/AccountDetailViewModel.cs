@@ -3,11 +3,11 @@ using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceApp.Models;
 using PersonalFinanceApp.Services;
 using System.Globalization;
-using System.Xml.Linq;
 
 namespace PersonalFinanceApp.ViewModels;
 
-public partial class AccountDetailViewModel : ObservableObject
+// ДОДАНО: реалізація інтерфейсу IQueryAttributable для отримання параметрів навігації
+public partial class AccountDetailViewModel : ObservableObject, IQueryAttributable
 {
     private readonly AccountService _accountService;
     private int _id;
@@ -32,6 +32,16 @@ public partial class AccountDetailViewModel : ObservableObject
         Name = account.Name;
         Type = account.Type;
         Balance = account.Balance.ToString("0.##", CultureInfo.InvariantCulture);
+    }
+
+    // ДОДАНО: Метод, який автоматично викликається Shell при переході на сторінку
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue("id", out var value) &&
+            int.TryParse(value?.ToString(), out var id))
+        {
+            Load(id); // Ініціалізуємо поля екрана знайденим рахунком
+        }
     }
 
     [RelayCommand]

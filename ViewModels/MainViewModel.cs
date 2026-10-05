@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceApp.Models;
 using PersonalFinanceApp.Services;
+using PersonalFinanceApp.Helpers; 
 
 namespace PersonalFinanceApp.ViewModels
 {
@@ -43,6 +44,17 @@ namespace PersonalFinanceApp.ViewModels
 
             NewAccountName = string.Empty;
             NewAccountBalance = string.Empty;
+        }
+
+        
+        [RelayCommand]
+        private async Task OpenAccountAsync(Account? account)
+        {
+            if (account is null)
+                return;
+
+           
+            await Shell.Current.GoToAsync($"{Routes.AccountDetail}?id={account.Id}");
         }
     }
 }
