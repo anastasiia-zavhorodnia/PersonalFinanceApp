@@ -1,10 +1,13 @@
-﻿namespace PersonalFinanceApp
+﻿using PersonalFinanceApp.Helpers;
+using PersonalFinanceApp.Views;
+
+namespace PersonalFinanceApp;
+
+public partial class AppShell : Shell
 {
-    public partial class AppShell : Shell
+    public AppShell()
     {
-        public AppShell()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+        Routing.RegisterRoute(Routes.AccountDetail, typeof(AccountDetailPage));
     }
 }
