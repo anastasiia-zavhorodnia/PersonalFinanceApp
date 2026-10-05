@@ -5,14 +5,17 @@ using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceApp.Models;
 using PersonalFinanceApp.Services;
 using PersonalFinanceApp.Helpers;
-using System.Diagnostics; // <-- ДОДАНО ДЛЯ ДІАГНОСТИЧНОГО ЛОГУВАННЯ
+using System.Diagnostics;
 
 namespace PersonalFinanceApp.ViewModels
 {
-    // ДОДАНО: підтримка інтерфейсу ILifecycleAware
     public partial class MainViewModel : ObservableObject, ILifecycleAware
     {
         private readonly AccountService _accountService;
+
+        // Ключі для легковагого збереження стану в Preferences API
+        private const string DraftNameKey = "draft_account_name";
+        private const string DraftBalanceKey = "draft_account_balance";
 
         public ObservableCollection<Account> Accounts => _accountService.Accounts;
 
@@ -22,9 +25,11 @@ namespace PersonalFinanceApp.ViewModels
         [ObservableProperty]
         private string newAccountBalance = string.Empty;
 
+        // ОНОВЛЕНО: Конструктор викликає відновлення стану форми при старті
         public MainViewModel(AccountService accountService)
         {
             _accountService = accountService;
+            LoadState(); // Відновлення чернетки при ініціалізації
         }
 
         [RelayCommand]
@@ -57,16 +62,31 @@ namespace PersonalFinanceApp.ViewModels
             await Shell.Current.GoToAsync($"{Routes.AccountDetail}?id={account.Id}");
         }
 
-        // <-- ДОДАНО: Метод викликається автоматично перед появою головного екрана
+        // МЕТОДИ ДЛЯ РОБОТИ З PREFERENCES API (ЗБЕРЕЖЕННЯ / ВІДНОВЛЕННЯ)
+        public void SaveState()
+        {
+            Preferences.Default.Set(DraftNameKey, NewAccountName);
+            Preferences.Default.Set(DraftBalanceKey, NewAccountBalance);
+            Debug.WriteLine("[MainViewModel] Стан збережено");
+        }
+
+        private void LoadState()
+        {
+            NewAccountName = Preferences.Default.Get(DraftNameKey, string.Empty);
+            NewAccountBalance = Preferences.Default.Get(DraftBalanceKey, string.Empty);
+            Debug.WriteLine("[MainViewModel] Стан відновлено");
+        }
+
         public void OnAppearing()
         {
             Debug.WriteLine("[MainViewModel] OnAppearing");
         }
 
-        // <-- ДОДАНО: Метод викликається автоматично при згортанні/переході з головного екрана
+        // ОНОВЛЕНО: При згортанні/переході з головного екрана автоматично зберігаємо чернетку
         public void OnDisappearing()
         {
             Debug.WriteLine("[MainViewModel] OnDisappearing");
+            SaveState();
         }
     }
 }

@@ -1,13 +1,18 @@
 ﻿using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using PersonalFinanceApp.ViewModels; // <-- ДОДАНО ДЛЯ ДОСТУПУ ДО VIEWMODEL
 
 namespace PersonalFinanceApp
 {
     public partial class App : Application
     {
-        public App()
+        private readonly MainViewModel _mainViewModel; // Зберігаємо посилання на Singleton ViewModel
+
+        // ОНОВЛЕНО: Конструктор тепер приймає MainViewModel з DI-контейнера
+        public App(MainViewModel mainViewModel)
         {
             InitializeComponent();
+            _mainViewModel = mainViewModel;
             Debug.WriteLine("[App] Конструктор");
         }
 
@@ -33,9 +38,11 @@ namespace PersonalFinanceApp
             base.OnStart();
         }
 
+        // ОНОВЛЕНО: При переході в режим сну (згортанні) зберігаємо стан чернетки
         protected override void OnSleep()
         {
             Debug.WriteLine("[App] OnSleep");
+            _mainViewModel.SaveState(); // Викликаємо збереження форми
             base.OnSleep();
         }
 

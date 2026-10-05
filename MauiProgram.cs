@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using PersonalFinanceApp.ViewModels;
 using PersonalFinanceApp.Views;
-using PersonalFinanceApp.Services; 
+using PersonalFinanceApp.Services;
 
 namespace PersonalFinanceApp
 {
@@ -18,14 +18,14 @@ namespace PersonalFinanceApp
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
-            
+            // Спільний сервіс даних (Singleton)
             builder.Services.AddSingleton<AccountService>();
 
-           
-            builder.Services.AddTransient<MainViewModel>();
+            // ОНОВЛЕНО: Головна ViewModel тепер зареєстрована як Singleton для збереження стану
+            builder.Services.AddSingleton<MainViewModel>();
             builder.Services.AddTransient<MainPage>();
 
-            
+            // Другий екран та його ViewModel (Transient)
             builder.Services.AddTransient<AccountDetailViewModel>();
             builder.Services.AddTransient<AccountDetailPage>();
 
