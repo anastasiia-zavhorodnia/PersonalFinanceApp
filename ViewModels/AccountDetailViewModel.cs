@@ -3,11 +3,13 @@ using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceApp.Models;
 using PersonalFinanceApp.Services;
 using System.Globalization;
+using PersonalFinanceApp.Helpers; // <-- ДОДАНО ДЛЯ ДОСТУПУ ДО ІНТЕРФЕЙСУ
+using System.Diagnostics; // <-- ДОДАНО ДЛЯ ДІАГНОСТИЧНОГО ЛОГУВАННЯ
 
 namespace PersonalFinanceApp.ViewModels;
 
-// ДОДАНО: реалізація інтерфейсу IQueryAttributable для отримання параметрів навігації
-public partial class AccountDetailViewModel : ObservableObject, IQueryAttributable
+// ОНОВЛЕНО: додано реалізацію інтерфейсу ILifecycleAware
+public partial class AccountDetailViewModel : ObservableObject, IQueryAttributable, ILifecycleAware
 {
     private readonly AccountService _accountService;
     private int _id;
@@ -34,7 +36,7 @@ public partial class AccountDetailViewModel : ObservableObject, IQueryAttributab
         Balance = account.Balance.ToString("0.##", CultureInfo.InvariantCulture);
     }
 
-    // ДОДАНО: Метод, який автоматично викликається Shell при переході на сторінку
+    // Метод, який автоматично викликається Shell при переході на сторінку
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (query.TryGetValue("id", out var value) &&
@@ -42,6 +44,18 @@ public partial class AccountDetailViewModel : ObservableObject, IQueryAttributab
         {
             Load(id); // Ініціалізуємо поля екрана знайденим рахунком
         }
+    }
+
+    // <-- ДОДАНО: Метод викликається автоматично перед появою екрана деталей
+    public void OnAppearing()
+    {
+        Debug.WriteLine("[AccountDetailViewModel] OnAppearing");
+    }
+
+    // <-- ДОДАНО: Метод викликається автоматично перед закриттям/приховуванням екрана деталей
+    public void OnDisappearing()
+    {
+        Debug.WriteLine("[AccountDetailViewModel] OnDisappearing");
     }
 
     [RelayCommand]
