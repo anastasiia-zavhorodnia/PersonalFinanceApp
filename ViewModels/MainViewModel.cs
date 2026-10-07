@@ -1,23 +1,22 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PersonalFinanceApp.Helpers;
 using PersonalFinanceApp.Models;
 using PersonalFinanceApp.Services;
-using PersonalFinanceApp.Helpers;
-using System.Diagnostics;
 
 namespace PersonalFinanceApp.ViewModels
 {
     public partial class MainViewModel : ObservableObject, ILifecycleAware
     {
-        private readonly AccountService _accountService;
-
-        // Ключі для легковагого збереження стану в Preferences API
         private const string DraftNameKey = "draft_account_name";
         private const string DraftBalanceKey = "draft_account_balance";
 
-        public ObservableCollection<Account> Accounts => _accountService.Accounts;
+        private readonly DatabaseService _db;
+
+        public ObservableCollection<Account> Accounts { get; } = new();
 
         [ObservableProperty]
         private string newAccountName = string.Empty;
@@ -25,15 +24,29 @@ namespace PersonalFinanceApp.ViewModels
         [ObservableProperty]
         private string newAccountBalance = string.Empty;
 
-        // ОНОВЛЕНО: Конструктор викликає відновлення стану форми при старті
-        public MainViewModel(AccountService accountService)
+        public MainViewModel(DatabaseService db)
         {
-            _accountService = accountService;
-            LoadState(); // Відновлення чернетки при ініціалізації
+            _db = db;
+            LoadState();
+        }
+
+        private async Task LoadAccountsAsync()
+        {
+            try
+            {
+                var items = await _db.GetAllAsync();
+                Accounts.Clear();
+                foreach (var item in items)
+                    Accounts.Add(item);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MainViewModel] Помилка завантаження: {ex.Message}");
+            }
         }
 
         [RelayCommand]
-        private void AddAccount()
+        private async Task AddAccountAsync()
         {
             if (string.IsNullOrWhiteSpace(NewAccountName))
                 return;
@@ -47,7 +60,15 @@ namespace PersonalFinanceApp.ViewModels
                     return;
             }
 
-            _accountService.Add(NewAccountName.Trim(), "Банківський рахунок", balance);
+            var account = new Account
+            {
+                Name = NewAccountName.Trim(),
+                Type = "Банківський рахунок",
+                Balance = balance
+            };
+
+            await _db.InsertAsync(account);   // після вставки account.Id заповнений базою
+            Accounts.Add(account);
 
             NewAccountName = string.Empty;
             NewAccountBalance = string.Empty;
@@ -62,7 +83,6 @@ namespace PersonalFinanceApp.ViewModels
             await Shell.Current.GoToAsync($"{Routes.AccountDetail}?id={account.Id}");
         }
 
-        // МЕТОДИ ДЛЯ РОБОТИ З PREFERENCES API (ЗБЕРЕЖЕННЯ / ВІДНОВЛЕННЯ)
         public void SaveState()
         {
             Preferences.Default.Set(DraftNameKey, NewAccountName);
@@ -80,9 +100,9 @@ namespace PersonalFinanceApp.ViewModels
         public void OnAppearing()
         {
             Debug.WriteLine("[MainViewModel] OnAppearing");
+            _ = LoadAccountsAsync();   // перечитуємо базу: після редагування чи видалення список оновиться
         }
 
-        // ОНОВЛЕНО: При згортанні/переході з головного екрана автоматично зберігаємо чернетку
         public void OnDisappearing()
         {
             Debug.WriteLine("[MainViewModel] OnDisappearing");

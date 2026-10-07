@@ -18,8 +18,8 @@ namespace PersonalFinanceApp
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
-            // Спільний сервіс даних (Singleton)
-            builder.Services.AddSingleton<AccountService>();
+            
+            builder.Services.AddSingleton<DatabaseService>();
 
             // ОНОВЛЕНО: Головна ViewModel тепер зареєстрована як Singleton для збереження стану
             builder.Services.AddSingleton<MainViewModel>();
