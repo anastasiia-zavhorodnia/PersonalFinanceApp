@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using PersonalFinanceApp.Models;
 using SQLite;
+using Microsoft.Extensions.Logging;
 
 namespace PersonalFinanceApp.Services;
 
@@ -10,6 +11,13 @@ public class DatabaseService
 
     private SQLiteAsyncConnection? _connection;
     private readonly SemaphoreSlim _initLock = new(1, 1);
+
+    private readonly ILogger<DatabaseService> _logger;
+
+    public DatabaseService(ILogger<DatabaseService> logger)
+    {
+        _logger = logger;
+    }
 
     // З'єднання створюється один раз, таблиця створюється при першому зверненні
     private async Task<SQLiteAsyncConnection> GetConnectionAsync()

@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceApp.Helpers;
 using PersonalFinanceApp.Models;
 using PersonalFinanceApp.Services;
+using Microsoft.Extensions.Logging; // Додано using
 
 namespace PersonalFinanceApp.ViewModels
 {
@@ -15,6 +16,7 @@ namespace PersonalFinanceApp.ViewModels
         private const string DraftBalanceKey = "draft_account_balance";
 
         private readonly DatabaseService _db;
+        private readonly ILogger<MainViewModel> _logger; // Додано поле логера
 
         public ObservableCollection<Account> Accounts { get; } = new();
 
@@ -24,9 +26,11 @@ namespace PersonalFinanceApp.ViewModels
         [ObservableProperty]
         private string newAccountBalance = string.Empty;
 
-        public MainViewModel(DatabaseService db)
+        // Оновлений конструктор з логером
+        public MainViewModel(DatabaseService db, ILogger<MainViewModel> logger)
         {
             _db = db;
+            _logger = logger;
             LoadState();
         }
 
@@ -67,7 +71,7 @@ namespace PersonalFinanceApp.ViewModels
                 Balance = balance
             };
 
-            await _db.InsertAsync(account);   // після вставки account.Id заповнений базою
+            await _db.InsertAsync(account);
             Accounts.Add(account);
 
             NewAccountName = string.Empty;
@@ -99,9 +103,15 @@ namespace PersonalFinanceApp.ViewModels
 
         public void OnAppearing()
         {
-            Debug.WriteLine("[MainViewModel] OnAppearing");
-            _ = LoadAccountsAsync();   // перечитуємо базу: після редагування чи видалення список оновиться
+            // Логуємо штатну подію входу на екран за ЛР4
+            _logger.LogInformation("Головний екран показано");
+
+            // Запускаємо асинхронне завантаження рахунків із бази даних
+            _ = LoadAccountsAsync();
         }
+
+
+
 
         public void OnDisappearing()
         {

@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using PersonalFinanceApp.Helpers;
 using PersonalFinanceApp.Models;
 using PersonalFinanceApp.Services;
+using Microsoft.Extensions.Logging; // Додано using
 
 namespace PersonalFinanceApp.ViewModels;
 
@@ -12,15 +13,18 @@ public partial class AccountDetailViewModel
     : ObservableObject, IQueryAttributable, ILifecycleAware
 {
     private readonly DatabaseService _db;
+    private readonly ILogger<AccountDetailViewModel> _logger; // Додано поле логера
     private Account? _account;
 
     [ObservableProperty] private string name = string.Empty;
     [ObservableProperty] private string type = string.Empty;
     [ObservableProperty] private string balance = string.Empty;
 
-    public AccountDetailViewModel(DatabaseService db)
+    // Оновлений конструктор з логером
+    public AccountDetailViewModel(DatabaseService db, ILogger<AccountDetailViewModel> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -62,12 +66,13 @@ public partial class AccountDetailViewModel
         {
             var text = Balance.Trim().Replace(',', '.');
             if (!decimal.TryParse(text, NumberStyles.Number,
-                                  CultureInfo.InvariantCulture, out parsed))
+                                  CultureInfo.InvariantCulture, out var parsedBalance))
             {
                 await Shell.Current.DisplayAlert("Помилка",
                     "Введіть коректну суму.", "OK");
                 return;
             }
+            parsed = parsedBalance;
         }
 
         _account.Name = Name.Trim();
