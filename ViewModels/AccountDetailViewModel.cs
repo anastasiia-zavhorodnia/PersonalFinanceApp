@@ -1,87 +1,105 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Diagnostics;
+using System.Globalization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PersonalFinanceApp.Helpers;
 using PersonalFinanceApp.Models;
 using PersonalFinanceApp.Services;
-using System.Globalization;
-using PersonalFinanceApp.Helpers; // <-- ДОДАНО ДЛЯ ДОСТУПУ ДО ІНТЕРФЕЙСУ
-using System.Diagnostics; // <-- ДОДАНО ДЛЯ ДІАГНОСТИЧНОГО ЛОГУВАННЯ
 
 namespace PersonalFinanceApp.ViewModels;
 
-// ОНОВЛЕНО: додано реалізацію інтерфейсу ILifecycleAware
-public partial class AccountDetailViewModel : ObservableObject, IQueryAttributable, ILifecycleAware
+public partial class AccountDetailViewModel
+    : ObservableObject, IQueryAttributable, ILifecycleAware
 {
-    private readonly AccountService _accountService;
-    private int _id;
+    private readonly DatabaseService _db;
+    private Account? _account;
 
     [ObservableProperty] private string name = string.Empty;
     [ObservableProperty] private string type = string.Empty;
     [ObservableProperty] private string balance = string.Empty;
 
-    public AccountDetailViewModel(AccountService accountService)
+    public AccountDetailViewModel(DatabaseService db)
     {
-        _accountService = accountService;
+        _db = db;
     }
 
-    // Викликається після отримання Id (у кроці 4 її викличе IQueryAttributable)
-    public void Load(int id)
-    {
-        var account = _accountService.GetById(id);
-        if (account is null)
-            return;
-
-        _id = account.Id;
-        Name = account.Name;
-        Type = account.Type;
-        Balance = account.Balance.ToString("0.##", CultureInfo.InvariantCulture);
-    }
-
-    // Метод, який автоматично викликається Shell при переході на сторінку
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (query.TryGetValue("id", out var value) &&
             int.TryParse(value?.ToString(), out var id))
         {
-            Load(id); // Ініціалізуємо поля екрана знайденим рахунком
+            _ = LoadAsync(id);
         }
     }
 
-    // <-- ДОДАНО: Метод викликається автоматично перед появою екрана деталей
-    public void OnAppearing()
+    private async Task LoadAsync(int id)
     {
-        Debug.WriteLine("[AccountDetailViewModel] OnAppearing");
-    }
+        var account = await _db.GetByIdAsync(id);
+        if (account is null)
+            return;
 
-    // <-- ДОДАНО: Метод викликається автоматично перед закриттям/приховуванням екрана деталей
-    public void OnDisappearing()
-    {
-        Debug.WriteLine("[AccountDetailViewModel] OnDisappearing");
+        _account = account;
+        Name = account.Name;
+        Type = account.Type;
+        Balance = account.Balance.ToString("0.##", CultureInfo.InvariantCulture);
     }
 
     [RelayCommand]
     private async Task SaveAsync()
     {
+        if (_account is null)
+            return;
+
         if (string.IsNullOrWhiteSpace(Name))
-            return;
-
-        var text = Balance.Trim().Replace(',', '.');
-        if (!decimal.TryParse(text, NumberStyles.Number,
-                              CultureInfo.InvariantCulture, out var parsed))
-            return;
-
-        var original = _accountService.GetById(_id);
-        if (original is null)
-            return;
-
-        _accountService.Update(new Account
         {
-            Id = _id,
-            Name = Name.Trim(),
-            Type = Type.Trim(),
-            Balance = parsed,
-            Transactions = original.Transactions
-        });
+            await Shell.Current.DisplayAlert("Помилка",
+                "Назва рахунку не може бути порожньою.", "OK");
+            return;
+        }
 
-        await Shell.Current.GoToAsync("..");   // повернення на попередній екран
+        decimal parsed = 0;
+        if (!string.IsNullOrWhiteSpace(Balance))
+        {
+            var text = Balance.Trim().Replace(',', '.');
+            if (!decimal.TryParse(text, NumberStyles.Number,
+                                  CultureInfo.InvariantCulture, out parsed))
+            {
+                await Shell.Current.DisplayAlert("Помилка",
+                    "Введіть коректну суму.", "OK");
+                return;
+            }
+        }
+
+        _account.Name = Name.Trim();
+        _account.Type = Type.Trim();
+        _account.Balance = parsed;
+
+        await _db.UpdateAsync(_account);
+        await Shell.Current.GoToAsync("..");
+    }
+
+    [RelayCommand]
+    private async Task DeleteAsync()
+    {
+        if (_account is null)
+            return;
+
+        bool confirm = await Shell.Current.DisplayAlert("Видалення",
+            $"Видалити рахунок «{_account.Name}»?", "Видалити", "Скасувати");
+        if (!confirm)
+            return;
+
+        await _db.DeleteAsync(_account);
+        await Shell.Current.GoToAsync("..");
+    }
+
+    public void OnAppearing()
+    {
+        Debug.WriteLine("[AccountDetailViewModel] OnAppearing");
+    }
+
+    public void OnDisappearing()
+    {
+        Debug.WriteLine("[AccountDetailViewModel] OnDisappearing");
     }
 }
