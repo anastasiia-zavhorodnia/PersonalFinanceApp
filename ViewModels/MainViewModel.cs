@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using PersonalFinanceApp.Helpers;
 using PersonalFinanceApp.Models;
 using PersonalFinanceApp.Services;
+using System.Diagnostics;
 
 namespace PersonalFinanceApp.ViewModels
 {
@@ -50,6 +51,9 @@ namespace PersonalFinanceApp.ViewModels
         [RelayCommand]
         private async Task AddAccountAsync()
         {
+            
+
+
             if (string.IsNullOrWhiteSpace(NewAccountName))
             {
                 await AlertHelper.ShowErrorAsync("Введіть назву рахунку.");
