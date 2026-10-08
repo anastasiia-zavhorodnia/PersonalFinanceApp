@@ -4,6 +4,7 @@ using PersonalFinanceApp.Views;
 using PersonalFinanceApp.Services;
 using PersonalFinanceApp.Helpers;
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace PersonalFinanceApp
 {
@@ -45,7 +46,24 @@ namespace PersonalFinanceApp
 
             Debug.WriteLine($"[Log] Файл логу: {logPath}"); // вивід шляху для звіту
 
-            return builder.Build();
+            var app = builder.Build();
+
+            var logger = app.Services.GetRequiredService<ILoggerFactory>()
+                                     .CreateLogger("GlobalExceptionHandler");
+
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+            {
+                logger.LogCritical(e.ExceptionObject as Exception,
+                    "Необроблений виняток. Застосунок завершується: {IsTerminating}", e.IsTerminating);
+            };
+
+            TaskScheduler.UnobservedTaskException += (sender, e) =>
+            {
+                logger.LogError(e.Exception, "Неспостережений виняток у фоновій задачі");
+                e.SetObserved();   // позначаємо як оброблений, щоб він не поширювався далі
+            };
+
+            return app;
         }
     }
 }

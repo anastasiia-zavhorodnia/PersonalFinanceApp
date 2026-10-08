@@ -1,12 +1,11 @@
 ﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using PersonalFinanceApp.Helpers;
 using PersonalFinanceApp.Models;
 using PersonalFinanceApp.Services;
-using Microsoft.Extensions.Logging; // Додано using
 
 namespace PersonalFinanceApp.ViewModels
 {
@@ -16,7 +15,7 @@ namespace PersonalFinanceApp.ViewModels
         private const string DraftBalanceKey = "draft_account_balance";
 
         private readonly DatabaseService _db;
-        private readonly ILogger<MainViewModel> _logger; // Додано поле логера
+        private readonly ILogger<MainViewModel> _logger;
 
         public ObservableCollection<Account> Accounts { get; } = new();
 
@@ -26,7 +25,6 @@ namespace PersonalFinanceApp.ViewModels
         [ObservableProperty]
         private string newAccountBalance = string.Empty;
 
-        // Оновлений конструктор з логером
         public MainViewModel(DatabaseService db, ILogger<MainViewModel> logger)
         {
             _db = db;
@@ -36,24 +34,27 @@ namespace PersonalFinanceApp.ViewModels
 
         private async Task LoadAccountsAsync()
         {
-            try
+            var items = await _db.GetAllAsync();
+            if (items is null)
             {
-                var items = await _db.GetAllAsync();
-                Accounts.Clear();
-                foreach (var item in items)
-                    Accounts.Add(item);
+                // Технічні подробиці вже в лозі, користувачу показуємо коротке повідомлення
+                await AlertHelper.ShowErrorAsync("Не вдалося завантажити рахунки. Спробуйте ще раз.");
+                return;
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MainViewModel] Помилка завантаження: {ex.Message}");
-            }
+
+            Accounts.Clear();
+            foreach (var item in items)
+                Accounts.Add(item);
         }
 
         [RelayCommand]
         private async Task AddAccountAsync()
         {
             if (string.IsNullOrWhiteSpace(NewAccountName))
+            {
+                await AlertHelper.ShowErrorAsync("Введіть назву рахунку.");
                 return;
+            }
 
             decimal balance = 0;
             if (!string.IsNullOrWhiteSpace(NewAccountBalance))
@@ -61,7 +62,11 @@ namespace PersonalFinanceApp.ViewModels
                 var text = NewAccountBalance.Trim().Replace(',', '.');
                 if (!decimal.TryParse(text, NumberStyles.Number,
                                       CultureInfo.InvariantCulture, out balance))
+                {
+                    _logger.LogWarning("Користувач ввів некоректну суму: {Value}", NewAccountBalance);
+                    await AlertHelper.ShowErrorAsync("Введіть коректну суму.");
                     return;
+                }
             }
 
             var account = new Account
@@ -71,9 +76,13 @@ namespace PersonalFinanceApp.ViewModels
                 Balance = balance
             };
 
-            await _db.InsertAsync(account);
-            Accounts.Add(account);
+            if (!await _db.InsertAsync(account))
+            {
+                await AlertHelper.ShowErrorAsync("Не вдалося зберегти дані, спробуйте ще раз.");
+                return;   // поля не очищаємо, щоб користувач не втратив введене
+            }
 
+            Accounts.Add(account);
             NewAccountName = string.Empty;
             NewAccountBalance = string.Empty;
         }
@@ -91,31 +100,25 @@ namespace PersonalFinanceApp.ViewModels
         {
             Preferences.Default.Set(DraftNameKey, NewAccountName);
             Preferences.Default.Set(DraftBalanceKey, NewAccountBalance);
-            Debug.WriteLine("[MainViewModel] Стан збережено");
+            _logger.LogDebug("Чернетку форми збережено");
         }
 
         private void LoadState()
         {
             NewAccountName = Preferences.Default.Get(DraftNameKey, string.Empty);
             NewAccountBalance = Preferences.Default.Get(DraftBalanceKey, string.Empty);
-            Debug.WriteLine("[MainViewModel] Стан відновлено");
+            _logger.LogDebug("Чернетку форми відновлено");
         }
 
         public void OnAppearing()
         {
-            // Логуємо штатну подію входу на екран за ЛР4
             _logger.LogInformation("Головний екран показано");
-
-            // Запускаємо асинхронне завантаження рахунків із бази даних
             _ = LoadAccountsAsync();
         }
 
-
-
-
         public void OnDisappearing()
         {
-            Debug.WriteLine("[MainViewModel] OnDisappearing");
+            _logger.LogDebug("Головний екран зник");
             SaveState();
         }
     }
