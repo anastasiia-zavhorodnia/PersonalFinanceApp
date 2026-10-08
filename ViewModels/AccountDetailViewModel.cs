@@ -47,13 +47,28 @@ public partial class AccountDetailViewModel
     [RelayCommand]
     private async Task SaveAsync()
     {
-        if (_account is null || string.IsNullOrWhiteSpace(Name))
+        if (_account is null)
             return;
 
-        var text = Balance.Trim().Replace(',', '.');
-        if (!decimal.TryParse(text, NumberStyles.Number,
-                              CultureInfo.InvariantCulture, out var parsed))
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            await Shell.Current.DisplayAlert("Помилка",
+                "Назва рахунку не може бути порожньою.", "OK");
             return;
+        }
+
+        decimal parsed = 0;
+        if (!string.IsNullOrWhiteSpace(Balance))
+        {
+            var text = Balance.Trim().Replace(',', '.');
+            if (!decimal.TryParse(text, NumberStyles.Number,
+                                  CultureInfo.InvariantCulture, out parsed))
+            {
+                await Shell.Current.DisplayAlert("Помилка",
+                    "Введіть коректну суму.", "OK");
+                return;
+            }
+        }
 
         _account.Name = Name.Trim();
         _account.Type = Type.Trim();
@@ -67,6 +82,11 @@ public partial class AccountDetailViewModel
     private async Task DeleteAsync()
     {
         if (_account is null)
+            return;
+
+        bool confirm = await Shell.Current.DisplayAlert("Видалення",
+            $"Видалити рахунок «{_account.Name}»?", "Видалити", "Скасувати");
+        if (!confirm)
             return;
 
         await _db.DeleteAsync(_account);
