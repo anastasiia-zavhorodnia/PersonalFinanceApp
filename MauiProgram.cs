@@ -2,6 +2,8 @@
 using PersonalFinanceApp.ViewModels;
 using PersonalFinanceApp.Views;
 using PersonalFinanceApp.Services;
+using PersonalFinanceApp.Helpers;
+using System.Diagnostics;
 
 namespace PersonalFinanceApp
 {
@@ -18,10 +20,10 @@ namespace PersonalFinanceApp
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
-            
+            // Сервіс бази даних SQLite (Singleton)
             builder.Services.AddSingleton<DatabaseService>();
 
-            // ОНОВЛЕНО: Головна ViewModel тепер зареєстрована як Singleton для збереження стану
+            // Головна ViewModel тепер зареєстрована як Singleton для збереження стану
             builder.Services.AddSingleton<MainViewModel>();
             builder.Services.AddTransient<MainPage>();
 
@@ -29,9 +31,19 @@ namespace PersonalFinanceApp
             builder.Services.AddTransient<AccountDetailViewModel>();
             builder.Services.AddTransient<AccountDetailPage>();
 
+            
+            var logPath = Path.Combine(FileSystem.AppDataDirectory, "logs", "app.log");
+
+            builder.Logging.AddFilter("Microsoft", LogLevel.Warning); // прибираємо шум самого фреймворку
+
 #if DEBUG
             builder.Logging.AddDebug();
+            builder.Logging.SetMinimumLevel(LogLevel.Debug);
 #endif
+
+            builder.Logging.AddProvider(new FileLoggerProvider(logPath, LogLevel.Information));
+
+            Debug.WriteLine($"[Log] Файл логу: {logPath}"); // вивід шляху для звіту
 
             return builder.Build();
         }
